@@ -34,6 +34,7 @@ jobs:
           DESTINOS: ${{ secrets.DESTINOS }}
           FRP_MIN: ${{ vars.FRP_MIN || '10' }}
           CONFIANZA_MIN: ${{ vars.CONFIANZA_MIN || 'n' }}
+          MAX_FOCOS_LISTADOS: ${{ vars.MAX_FOCOS_LISTADOS || '15' }}
           TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
