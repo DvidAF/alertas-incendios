@@ -1,0 +1,55 @@
+
+name: Alertas de incendios
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"  
+  workflow_dispatch:       
+permissions:
+  contents: write          
+
+concurrency:
+  group: alertas-incendios
+  cancel-in-progress: false
+  
+jobs:
+  alertas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install requests python-dotenv
+
+      - name: Buscar focos y enviar alertas
+        env:
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+          NOTIFICAR_POR: ${{ vars.NOTIFICAR_POR || 'telegram' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DESTINOS: ${{ secrets.DESTINOS }}
+          FRP_MIN: ${{ vars.FRP_MIN || '10' }}
+          CONFIANZA_MIN: ${{ vars.CONFIANZA_MIN || 'n' }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
+          META_WA_TOKEN: ${{ secrets.META_WA_TOKEN }}
+          META_WA_PHONE_ID: ${{ secrets.META_WA_PHONE_ID }}
+        run: python alertas_incendios_py.py
+
+      - name: Guardar historial de notificados
+        if: always()
+        run: |
+          git config user.name "alertas-bot"
+          git config user.email "alertas-bot@users.noreply.github.com"
+          for f in focos_notificados.json paraguay.geojson; do
+            if [ -f "$f" ]; then git add -f "$f"; fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "Actualizar historial de focos notificados"
+            git push
+          fi
